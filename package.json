@@ -1,0 +1,30 @@
+{
+  "name": "dns-core",
+  "version": "0.0.1",
+  "description": "dns core",
+  "main": "app.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "mongodb": "~1.4.4",
+    "native-dns-packet": "~0.0.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noevil/nodejs-dns-core"
+  },
+  "keywords": [
+    "dns",
+    "nodejs"
+  ],
+  "author": "Noevil",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/noevil/nodejs-dns-core/issues"
+  }
+}
