@@ -85,17 +85,17 @@ var loopFilter = function(expires_db, loop_interval) {
 
 	// LOOP TO CHECK WHETHER HAVE DOMAIN ALREADY EXPIRED
 	setInterval(function() {
-		console.log('; prefetch domains count', records_count);
+		// console.log('; prefetch domains count', records_count);
 
 		// EXPIRED DOMAIN COUNTER
 		records_count = 0;
 		// 5s - 10s
 		var expExpire = new RegExp('^' + (Date.now() / 10000 | 0) * 10);
 
-		console.log(', expExpire', expExpire);
+		// console.log(', expExpire', expExpire);
 		
 		expires_db.collection('main').get({_id: expExpire}, function(results) {
-			console.log(', results', results);
+			// console.log(', results', results);
 
 			// {
 			// 	_id: '1400231750_www.ibm.com:1',
