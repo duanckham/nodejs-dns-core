@@ -121,18 +121,14 @@ Dns.prototype.type = function(type) {
 };
 
 Dns.prototype.init = function(msg, rinfo, report) {
-	if (msg[11] !== 0) msg[11] = 0;
+	if (msg[11] !== 0) 
+		msg[11] = 0;
 
 	this.report = report;
 	this.client_req_msg = msg;
 	this.client_req_info = rinfo || false;
 	this.parseClientMsg(msg);
 	this.report.dns_req_count++;
-
-	// DEBUG
-	if (~this.client_req_info.address.indexOf('192.168')) {
-		console.log('client_req_info.address', this.client_req_info.address);
-	}
 };
 
 Dns.prototype.sendToClient = function() {
@@ -176,10 +172,8 @@ Dns.prototype.sendToServer = function(callback) {
 	self.root_dns_servers.forEach(function(server) {
 		self.rootService.ask(self.server_req_msg, server, self.client_req_name, function(error, msg) {
 			if (error) {
+				self.report.dns_err_count++;
 				self.report.log('error', error.info, error.spot);
-
-				console.log('error.spot', error.spot);
-
 				return callback(true);
 			}
 
@@ -445,7 +439,7 @@ Dns.prototype.process = function(callback) {
 	// CHECK DOMAIN VALIDITY
 	if (this.validity()) {
 		this.readRecord(function(result) {
-			if (result.length > 0) {
+			if (result) {
 				self.writeResMsg(result);
 				self.sendToClient();
 				callback && callback(self);
