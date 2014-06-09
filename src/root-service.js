@@ -17,7 +17,7 @@ RootService.prototype.ask = function(question_buf, dns_server, question_name, ca
 				info: 'Socket timeout when send package to Root DNS.',
 				spot: question_name
 			}, null);
-		}, 1000);
+		}, 10000);
 
 		// IF GET REPLY MESSAGE FROM ROOT DNS SERVER
 		client.on('message', function(msg) {
