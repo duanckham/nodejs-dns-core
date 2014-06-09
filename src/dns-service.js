@@ -79,6 +79,8 @@ var runService = function(port, host) {
 	server.on('message', function(msg, rinfo) {
 		var dns = new Dns(msg, rinfo, report);
 
+		// console.log('rinfo', rinfo);
+
 		dns.rootService = rootService;
 		dns.record = record;
 		dns.isp = isp;
