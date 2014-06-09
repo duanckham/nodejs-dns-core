@@ -23,5 +23,5 @@ var fs = require('fs');
 // 	}
 // });
 
-dnsCoreService.run(CONFIG.DNS_PORT, CONFIG.DNS_HOST);
+dnsCoreService.run(CONFIG.DNS_PORT);
 dnsPrefetchService.run(CONFIG.DNS_PREFETCH_HEARTBEAT);

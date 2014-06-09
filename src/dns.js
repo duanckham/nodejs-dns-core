@@ -266,8 +266,6 @@ Dns.prototype.writeResMsg = function(answer_packet) {
 	this.client_res_packet.question.push(this.client_req_question);
 	this.client_res_msg = new Buffer(512);
 
-	console.log(0, this.client_res_packet);
-
 	try {
 		var written_length = ndp.write(this.client_res_msg, this.client_res_packet);
 		this.client_res_msg = this.client_res_msg.slice(0, written_length);
@@ -442,26 +440,6 @@ Dns.prototype.spoof = function() {
 
 Dns.prototype.process = function(callback) {
 	var self = this;
-
-	if (~this.client_req_info.address.indexOf('192.168')) {
-		
-		// this.server_res_packet = this.createPacket(this.client_req_id, 1)
-		// this.server_res_packet.authority.push({
-		// 	'name': this.client_req_name,
-		// 	'type': 2,
-		// 	'class': 1,
-		// 	'ttl': 500,
-		// 	'data': 'localhost.'
-		// });
-
-		// this.writeResMsg(this.server_res_packet);
-		// this.sendToClient();
-
-		// console.log(1, this.server_res_packet);
-
-		// callback && callback(self);
-		// return;
-	}
 
 	this.checkIsp();
 	// CHECK DOMAIN VALIDITY

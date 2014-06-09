@@ -1,5 +1,4 @@
 global.CONFIG = {
-	DNS_HOST: '0.0.0.0',
 	DNS_PORT: 53,
 	DNS_SOCKETS_COUNT: 1000,
 

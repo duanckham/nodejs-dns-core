@@ -15,6 +15,12 @@ var Proxy = require('./proxy');
 
 var tasks = new Tasks();
 var proxy = new Proxy();
+var rootService = new RootService();
+var record = new Record();
+var report = new Report();
+var isp = new Isp();
+var statistics = new Statistics();
+var prefetch = new Prefetch();
 
 var createTask = function(dns) {
 	var question_key = dns.client_req_name + ':' + dns.client_req_type;
@@ -66,50 +72,45 @@ var readProxy = function(hostname, callback) {
 	});
 };
 
-// RUN THE DNS SERVER
-var runService = function(port, host) {
-	var rootService = new RootService();
-	var record = new Record();
-	var report = new Report();
-	var isp = new Isp();
-	var statistics = new Statistics();
-	var prefetch = new Prefetch();
+var processDNSRequest = function(msg, rinfo, udp) {
+	var dns = new Dns(msg, rinfo, report);
+
+	dns.rootService = rootService;
+	dns.record = record;
+	dns.isp = isp;
+	dns.udp = udp;
+	dns.statistics = statistics;
+	dns.prefetch = prefetch;
+
+	// PROXY
+	if (CONFIG.DNS_PROXY_ON) {
+		return readProxy(dns.client_req_name, function(error, result) {
+			if (!error && result) {
+				if (!createTask(dns)) 
+					return;
+				
+				dns.process(function(dns) {
+					runTask(dns);
+				});
+			} else {
+				dns.spoof();
+			}
+		});
+	}
+
+	// DNS
+	if (createTask(dns)) {
+		return dns.process(function(dns) {
+			runTask(dns);
+		});
+	}
+};
+
+var createServer = function(port, host) {
 	var server = dgram.createSocket('udp4');
 
 	server.on('message', function(msg, rinfo) {
-		var dns = new Dns(msg, rinfo, report);
-
-		// console.log('rinfo', rinfo);
-
-		dns.rootService = rootService;
-		dns.record = record;
-		dns.isp = isp;
-		dns.udp = server;
-		dns.statistics = statistics;
-		dns.prefetch = prefetch;
-
-		// PROXY
-		if (CONFIG.DNS_PROXY_ON) {
-			return readProxy(dns.client_req_name, function(error, result) {
-				if (!error && result) {
-					if (!createTask(dns)) 
-						return;
-					
-					dns.process(function(dns) {
-						runTask(dns);
-					});
-				} else {
-					dns.spoof();
-				}
-			});
-		}
-
-		// DNS
-		if (createTask(dns)) {
-			return dns.process(function(dns) {
-				runTask(dns);
-			});
-		}
+		processDNSRequest(msg, rinfo, server);
 	});
 
 	server.on('error', function(error) {
@@ -117,9 +118,22 @@ var runService = function(port, host) {
 	});
 
 	server.bind(port, host);
-	report.view();
+	console.log('; dns core service running. host:', host, 'port:', port);
+};
 
-	console.log('; dns core service running. host:', CONFIG.DNS_HOST, 'port:', CONFIG.DNS_PORT);
+// RUN THE DNS SERVER
+var runService = function(port) {
+	var interfaces = os.networkInterfaces();
+	var isip = /^(([1-9]?\d|1\d\d|25[0-5]|2[0-4]\d)\.){3}([1-9]?\d|1\d\d|25[0-5]|2[0-4]\d)$/;
+
+	for (var i in interfaces) {
+		interfaces[i].forEach(function(item) {
+			if (item.address.match(isip))
+				createServer(port, item.address);
+		});
+	}
+
+	report.view();
 };
 
 exports.run = runService;
