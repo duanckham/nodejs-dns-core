@@ -82,6 +82,8 @@ var processDNSRequest = function(msg, rinfo, udp) {
 	dns.statistics = statistics;
 	dns.prefetch = prefetch;
 
+	console.log('dns.client_req_name', dns.client_req_name);
+
 	// PROXY
 	if (CONFIG.DNS_PROXY_ON) {
 		return readProxy(dns.client_req_name, function(error, result) {
