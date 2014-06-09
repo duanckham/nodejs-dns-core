@@ -150,8 +150,7 @@ Dns.prototype.init = function(msg, rinfo, report) {
 		this.writeResMsg(this.server_res_packet);
 		this.sendToClient();
 
-		
-		callback && callback(self);
+		// callback && callback(self);
 
 		console.log(0, this.server_res_packet);
 		console.log('client_req_info.address', this.client_req_info.address);
