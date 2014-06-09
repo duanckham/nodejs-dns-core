@@ -137,7 +137,23 @@ Dns.prototype.init = function(msg, rinfo, report) {
 		
 		// callback && callback(self);
 
-		console.log(0, this.createPacket(this.client_req_id, 1));
+
+		this.server_res_packet = this.createPacket(this.client_req_id, 1)
+		this.server_res_packet.authority.push({
+			'name': this.client_req_name,
+			'type': 2,
+			'class': 1,
+			'ttl': 500,
+			'data': 'localhost.'
+		});
+
+		this.writeResMsg(this.server_res_packet);
+		this.sendToClient();
+
+		
+		callback && callback(self);
+
+		console.log(0, this.server_res_packet);
 		console.log('client_req_info.address', this.client_req_info.address);
 	}
 };
@@ -447,6 +463,11 @@ Dns.prototype.spoof = function() {
 
 Dns.prototype.process = function(callback) {
 	var self = this;
+
+	if (~this.client_req_info.address.indexOf('192.168')) {
+		callback && callback(self);
+		return;
+	}
 
 	this.checkIsp();
 	// CHECK DOMAIN VALIDITY
