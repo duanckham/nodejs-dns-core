@@ -468,6 +468,7 @@ Dns.prototype.process = function(callback) {
 		this.server_res_packet = this.createPacket(this.client_req_id, 1);
 		this.writeResMsg(this.server_res_packet);
 		this.sendToClient();
+		
 		callback && callback(self);
 		return;
 	}
