@@ -174,6 +174,14 @@ Dns.prototype.sendToServer = function(callback) {
 	var self = this;
 	self.root_dns_servers.forEach(function(server) {
 		self.rootService.ask(self.server_req_msg, server, self.client_req_name, function(error, msg) {
+			if (error) {
+				self.report.log('error', error.info, error.spot);
+
+				console.log('error.spot', error.spot);
+
+				return callback(true);
+			}
+
 			self.parseServerMsg(msg, callback);
 		});
 	});
@@ -317,6 +325,7 @@ Dns.prototype.readRecord = function(callback) {
 
 	console.log('client_req_name', this.client_req_name);
 
+	// WAIT TO FIX
 	if (!this.client_req_name)
 		return callback(false);
 
