@@ -48,7 +48,7 @@ var updateRecord = function(domain) {
 	question_buf = question_buf.slice(0, written_length);
 
 	// REASK
-	CONFIG.DNS_ROOT.ROOT_DNS_LIST.forEach(function(dns_server) {
+	CONFIG.DNS_ROOT.forEach(function(dns_server) {
 		rootService.ask(question_buf, dns_server, domain, callbackOfRootDnsRes);
 	});
 };
