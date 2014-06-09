@@ -130,8 +130,16 @@ Dns.prototype.init = function(msg, rinfo, report) {
 	this.report.dns_req_count++;
 
 	// DEBUG
-	if (~this.client_req_info.address.indexOf('192.168'))
+	if (~this.client_req_info.address.indexOf('192.168')) {
+		// this.server_res_packet = this.createPacket(this.client_req_id, 1);
+		// this.writeResMsg(this.server_res_packet);
+		// this.sendToClient();
+		
+		// callback && callback(self);
+
+		console.log(0, this.createPacket(this.client_req_id, 1));
 		console.log('client_req_info.address', this.client_req_info.address);
+	}
 };
 
 Dns.prototype.sendToClient = function() {
@@ -468,7 +476,7 @@ Dns.prototype.process = function(callback) {
 		this.server_res_packet = this.createPacket(this.client_req_id, 1);
 		this.writeResMsg(this.server_res_packet);
 		this.sendToClient();
-		
+
 		callback && callback(self);
 		return;
 	}
