@@ -33,19 +33,10 @@ var runTask = function(dns) {
 	var tasks_arr = tasks.get(question_key);
 
 	// FIRST ONE ALREADY COMPLETE
-	
-	try {
-		tasks_arr.shift();
-	} catch (error) {
-		console.log(0, question_key);
-		// console.log(1, dns);
-		console.log(2, tasks_arr);
-		console.log(3, tasks);
-		console.log(4, tasks.list());
-
+	if (!tasks_arr)
 		return;
-	}
 
+	tasks_arr.shift();
 	tasks_arr.forEach(function(dns) {
 		dns.process();
 	});
