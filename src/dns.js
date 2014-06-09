@@ -323,8 +323,6 @@ Dns.prototype.readRecord = function(callback) {
 		length: 0
 	};
 
-	console.log('client_req_name', this.client_req_name);
-
 	// WAIT TO FIX
 	if (!this.client_req_name)
 		return callback(false);
