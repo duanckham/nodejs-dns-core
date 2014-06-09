@@ -33,7 +33,17 @@ var runTask = function(dns) {
 	var tasks_arr = tasks.get(question_key);
 
 	// FIRST ONE ALREADY COMPLETE
-	tasks_arr.shift();
+	
+	try {
+		tasks_arr.shift();
+	} catch (error) {
+		console.log(1, dns);
+		console.log(2, tasks_arr);
+		console.log(3, tasks);
+
+		return;
+	}
+
 	tasks_arr.forEach(function(dns) {
 		dns.process();
 	});
@@ -75,6 +85,7 @@ var runService = function(port, host) {
 
 	server.on('message', function(msg, rinfo) {
 		var dns = new Dns(msg, rinfo, report);
+
 		dns.rootService = rootService;
 		dns.record = record;
 		dns.isp = isp;
@@ -100,14 +111,13 @@ var runService = function(port, host) {
 
 		// DNS
 		if (createTask(dns)) {
-			dns.process(function(dns) {
+			return dns.process(function(dns) {
 				runTask(dns);
 			});
 		}
 	});
 
 	server.on('error', function(error) {
-		// EXIT PROCESS
 		process.exit(1);
 	});
 
