@@ -315,6 +315,8 @@ Dns.prototype.readRecord = function(callback) {
 		length: 0
 	};
 
+	console.log('client_req_name', client_req_name);
+
 	// NORMAL
 	this.record.get(domain_key, function(result) {
 		results.normal = result;
