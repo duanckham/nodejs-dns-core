@@ -19,6 +19,8 @@ var proxy = new Proxy();
 var createTask = function(dns) {
 	var question_key = dns.client_req_name + ':' + dns.client_req_type;
 
+	console.log(0, question_key, dns);
+
 	if (tasks.get(question_key)) {
 		tasks.put(question_key, dns);
 		return false;
