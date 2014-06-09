@@ -38,7 +38,7 @@ var runTask = function(dns) {
 		tasks_arr.shift();
 	} catch (error) {
 		console.log(0, question_key);
-		console.log(1, dns);
+		// console.log(1, dns);
 		console.log(2, tasks_arr);
 		console.log(3, tasks);
 		console.log(4, tasks.list());
