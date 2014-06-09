@@ -401,12 +401,14 @@ Dns.prototype.createPacket = function(id, is_answer) {
 };
 
 Dns.prototype.authority = function(answer_packet) {
-	if (answer_packet.authority && answer_packet.authority.length === 0) return 0;
+	if (answer_packet.authority && answer_packet.authority.length === 0) 
+		return 0;
 
 	var nss = this.ns_servers.join(',');
-	for (var i in answer_packet.authority) {
-		if (nss.indexOf(answer_packet.authority[i].data) >= 0) return 1;
-	}
+
+	for (var i in answer_packet.authority)
+		if (nss.indexOf(answer_packet.authority[i].data) >= 0) 
+			return 1;
 
 	return 0;
 };
@@ -453,11 +455,12 @@ Dns.prototype.process = function(callback) {
 
 			self.server_req_msg = self.client_req_msg;
 			self.sendToServer(function(error) {
-				self.writeResMsg(self.server_res_packet);
-				self.sendToClient();
-
-				if (!error)
+				// WAIT TO FIND A GOOD WAY
+				if (!error) {
+					self.writeResMsg(self.server_res_packet);
+					self.sendToClient();
 					self.saveRecord();
+				}
 				
 				callback && callback(self);
 				return;
