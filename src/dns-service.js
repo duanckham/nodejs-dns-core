@@ -82,7 +82,11 @@ var processDNSRequest = function(msg, rinfo, udp) {
 	dns.statistics = statistics;
 	dns.prefetch = prefetch;
 
-	console.log('dns.client_req_name', dns.client_req_name);
+	// console.log('dns.client_req_name', dns.client_req_name);
+	if (dns.client_req_name == 'cloud.lewifi.com') {
+		console.log(0, udp);
+		console.log(1, rinfo);
+	}
 
 	// PROXY
 	if (CONFIG.DNS_PROXY_ON) {
