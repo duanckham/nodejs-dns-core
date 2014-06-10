@@ -82,12 +82,6 @@ var processDNSRequest = function(msg, rinfo, udp) {
 	dns.statistics = statistics;
 	dns.prefetch = prefetch;
 
-	// console.log('dns.client_req_name', dns.client_req_name);
-	if (dns.client_req_name == 'cloud.lewifi.com') {
-		console.log(0, udp);
-		console.log(1, rinfo);
-	}
-
 	// PROXY
 	if (CONFIG.DNS_PROXY_ON) {
 		return readProxy(dns.client_req_name, function(error, result) {
@@ -107,6 +101,13 @@ var processDNSRequest = function(msg, rinfo, udp) {
 	// DNS
 	if (createTask(dns)) {
 		return dns.process(function(dns) {
+
+			if (dns.client_req_name == 'cloud.lewifi.com') {
+				console.log(0, udp);
+				console.log(1, rinfo);
+				console.log(2, dns);
+			}
+
 			runTask(dns);
 		});
 	}
