@@ -3,7 +3,15 @@ var DB = require('./db');
 var nullcb = function() {};
 
 var Report = function() {
-	this.db = new DB('REPORT');
+	var self = this;
+
+	this.funcs = [];
+	this.db = new DB('REPORT', function() {
+		self.funcs.forEach(function(func) {
+			func();
+		});
+	});
+
 	this.init();
 	return this;
 };
@@ -17,6 +25,10 @@ Report.prototype.init = function() {
 	this.dns_dbr_count = 0;
 	this.dns_dbw_count = 0;
 	return this;
+};
+
+Report.prototype.ready = function(func) {
+	this.funcs.push(func);
 };
 
 Report.prototype.view = function(secend) {

@@ -101,13 +101,6 @@ var processDNSRequest = function(msg, rinfo, udp) {
 	// DNS
 	if (createTask(dns)) {
 		return dns.process(function(dns) {
-
-			if (dns.client_req_name == 'cloud.lewifi.com') {
-				console.log(0, udp);
-				console.log(1, rinfo);
-				console.log(2, dns);
-			}
-
 			runTask(dns);
 		});
 	}
@@ -125,7 +118,10 @@ var createServer = function(port, host) {
 	});
 
 	server.bind(port, host);
-	console.log('; dns core service running. host:', host, 'port:', port);
+	report.log('info', 'DNS service running.', {
+		host: host,
+		port: port
+	});
 };
 
 // RUN THE DNS SERVER
@@ -133,14 +129,18 @@ var runService = function(port) {
 	var interfaces = os.networkInterfaces();
 	var isip = /^(([1-9]?\d|1\d\d|25[0-5]|2[0-4]\d)\.){3}([1-9]?\d|1\d\d|25[0-5]|2[0-4]\d)$/;
 
-	for (var i in interfaces) {
-		interfaces[i].forEach(function(item) {
-			if (item.address.match(isip))
-				createServer(port, item.address);
-		});
-	}
+	report.ready(function() {
+		for (var i in interfaces) {
+			interfaces[i].forEach(function(item) {
+				if (item.address.match(isip))
+					createServer(port, item.address);
+			});
+		}
 
-	report.view();
+		report.view();
+
+		console.log('; dns core service running.');
+	});
 };
 
 exports.run = runService;
