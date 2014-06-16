@@ -10,21 +10,9 @@ RootService.prototype.ask = function(question_buf, dns_server, question_name, ca
 
 	// ASK REMOTE SERVER
 	this.sockets.get(function(client) {
-		// IF TIMEOUT
-		var _timeout = setTimeout(function() {
-			self.sockets.back(client);
-			callback({
-				info: 'Socket timeout when send package to Root DNS.',
-				spot: question_name
-			}, null);
-		}, 10000);
-
 		// IF GET REPLY MESSAGE FROM ROOT DNS SERVER
 		client.on('message', function(msg) {
 			callback(null, msg, question_buf, dns_server);
-			self.sockets.back(client);
-			clearTimeout(_timeout);
-			return;
 		});
 
 		// ON ERROR
@@ -33,10 +21,13 @@ RootService.prototype.ask = function(question_buf, dns_server, question_name, ca
 				into: 'Sockets catch an error when send package to Root DNS.',
 				spot: self.sockets
 			}, null);
+		});
 
-			self.sockets.back(client);
-			clearTimeout(_timeout);
-			return;
+		client.on('timeout', function() {
+			callback({
+				info: 'Socket timeout when send package to Root DNS.',
+				spot: question_name
+			}, null);
 		});
 
 		// SEND TO ROOT DOMAIN

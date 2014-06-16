@@ -18,6 +18,8 @@ var test_a = function(server, clients_count, request_count) {
 	var _total = 0;
 	var _error = 0;
 
+	console.time('test');
+
 	for (var i = 0; i < clients_count; i++) {
 		for (var j = 0; j < request_count; j++) {
 			clients[i].exec('dig @' + server + ' ' + domains[num], function(error) {
@@ -81,8 +83,8 @@ var test_c = function(server, secs, limit) {
 };
 
 // console.time('test');
-// test_a('127.0.0.1', 4, 50);
-// test_b('127.0.0.1', 5, 200);
+test_a('127.0.0.1', 4, 50);
+test_b('127.0.0.1', 5, 200);
 // test_c('127.0.0.1:1337', 5, 500);
 
 
