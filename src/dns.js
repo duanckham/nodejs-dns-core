@@ -173,29 +173,21 @@ Dns.prototype.sendToServer = function(callback) {
 	var answered = false;
 	var counter = this.root_dns_servers.length;
 
-	// console.log(4, 'sendToServer');
-
 	this.root_dns_servers.forEach(function(server) {
 		self.rootService.ask(self.server_req_msg, server, self.client_req_name, function(error, msg) {
 			counter--;
 
-			if (answered) {
-				// console.log(0, 'counter,', counter, 'answered', answered);
+			if (answered)
 				return;
-			}
 
 			if (error) {
 				self.report.dns_err_count++;
 				self.report.log('error', error.info, error.spot);
 
-				// console.log(1, 'counter,', counter, 'answered', answered);
-
 				if (!counter) 
 					callback(false);
 			} else {
 				self.parseServerMsg(msg, function(result) {
-					// console.log(2, 'counter,', counter, 'answered', answered);
-
 					if (!result && !counter)
 						return callback(false);
 
