@@ -11,7 +11,8 @@ global.CONFIG = {
 		OTHER: '116.255.220.140'
 	},
 
-	DNS_MISS: '127.0.0.1',
+	DNS_MISS_ON: false,
+	DNS_MISS_IP: '127.0.0.1',
 	DNS_PREFETCH_HEARTBEAT: 5000,
 
 	// DB

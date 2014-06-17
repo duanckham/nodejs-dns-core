@@ -267,13 +267,13 @@ Dns.prototype.writeResMsg = function(answer_packet) {
 	res.additional = answer_packet.additional || [];
 
 	// MISS, JUMP
-	if (res.answer.length === 0) {
+	if (res.answer.length === 0 && CONFIG.DNS_MISS_ON) {
 		this.report.dns_mis_count++;
 		res.answer.push({
 			'name': this.client_req_name,
 			'type': 1,
 			'ttl': 5,
-			'address': CONFIG.DNS_MISS,
+			'address': CONFIG.DNS_MISS_IP,
 			'class': 1
 		});
 	}
