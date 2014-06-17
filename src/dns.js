@@ -254,7 +254,7 @@ Dns.prototype.parseServerMsg = function(msg, callback) {
 	}
 };
 
-Dns.prototype.writeResMsg = function(answer_packet) {
+Dns.prototype.writeResMsg = function(answer_packet, callback) {
 	var res = this.createPacket(this.client_req_id, 1);
 
 	// HEADER
@@ -285,6 +285,7 @@ Dns.prototype.writeResMsg = function(answer_packet) {
 	try {
 		var written_length = ndp.write(this.client_res_msg, this.client_res_packet);
 		this.client_res_msg = this.client_res_msg.slice(0, written_length);
+		callback && callback();
 	} catch (error) {
 		this.report.dns_err_count++;
 		this.report.log('error', 'Catch an error when write response message.', {
@@ -293,7 +294,6 @@ Dns.prototype.writeResMsg = function(answer_packet) {
 			answer_packet: answer_packet,
 			client: this.client_req_info
 		});
-		return null;
 	}
 };
 
@@ -473,9 +473,10 @@ Dns.prototype.process = function(callback) {
 	var normalRequest = function() {
 		self.readRecord(function(result) {
 			if (result) {
-				self.writeResMsg(result);
+				self.writeResMsg(result, function() {
+					self.saveRecord();
+				});
 				self.sendToClient();
-				self.saveRecord();
 			} else {
 				badRequest();
 			}
