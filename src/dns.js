@@ -168,16 +168,41 @@ Dns.prototype.sendToClient = function() {
 
 Dns.prototype.sendToServer = function(callback) {
 	this.report.dns_ask_count++;
+	
 	var self = this;
-	self.root_dns_servers.forEach(function(server) {
+	var answered = false;
+	var counter = this.root_dns_servers.length;
+
+	// console.log(4, 'sendToServer');
+
+	this.root_dns_servers.forEach(function(server) {
 		self.rootService.ask(self.server_req_msg, server, self.client_req_name, function(error, msg) {
+			counter--;
+
+			if (answered) {
+				// console.log(0, 'counter,', counter, 'answered', answered);
+				return;
+			}
+
 			if (error) {
 				self.report.dns_err_count++;
 				self.report.log('error', error.info, error.spot);
-				return callback(true);
-			}
 
-			self.parseServerMsg(msg, callback);
+				// console.log(1, 'counter,', counter, 'answered', answered);
+
+				if (!counter) 
+					callback(false);
+			} else {
+				self.parseServerMsg(msg, function(result) {
+					// console.log(2, 'counter,', counter, 'answered', answered);
+
+					if (!result && !counter)
+						return callback(false);
+
+					answered = true;
+					callback(result);
+				});
+			}
 		});
 	});
 };
@@ -205,18 +230,15 @@ Dns.prototype.parseServerMsg = function(msg, callback) {
 	if (this.server_res_packet) return;
 	if (msg == 'timeout') return;
 
-	var _ttl = 3600;
-
 	try {
 		this.root_dns_answers--;
 		this.server_res_packet = ndp.parse(msg);
-
-		if (this.server_res_packet.answer.length > 0)
-			_ttl = this.server_res_packet.answer[0].ttl;
-
+		this.server_res_packet.answer.length > 0
+			? _ttl = this.server_res_packet.answer[0].ttl
+			: _ttl = 3600;
 		this.prefetch.save(this.client_req_name + ':' + this.client_req_type, _ttl);
 
-		return callback();
+		return callback(this.server_res_packet);
 	} catch (error) {
 		if (this.root_dns_answers > 0) 
 			return;
@@ -228,7 +250,7 @@ Dns.prototype.parseServerMsg = function(msg, callback) {
 			client: this.client_req_info
 		});
 
-		return callback(error);
+		return callback(false);
 	}
 };
 
@@ -268,6 +290,7 @@ Dns.prototype.writeResMsg = function(answer_packet) {
 		this.report.log('error', 'Catch an error when write response message.', {
 			req: this.client_req_packet,
 			res: this.client_res_packet,
+			answer_packet: answer_packet,
 			client: this.client_req_info
 		});
 		return null;
@@ -276,7 +299,7 @@ Dns.prototype.writeResMsg = function(answer_packet) {
 
 Dns.prototype.checkIsp = function() {
 	this.client_req_isp = this.isp.getLine(this.client_req_info.address) || 'other';
-	return this.client_req_isp;
+	return this;
 };
 
 Dns.prototype.chooseFitRecord = function(results, callback) {
@@ -287,16 +310,29 @@ Dns.prototype.chooseFitRecord = function(results, callback) {
 	this.statistics.hit(this.client_req_name, this.client_req_isp, this.client_req_type);
 	this.prefetch.update(this.client_req_name + ':' + this.client_req_type);
 
-	// IF NO SETTING
-	if (!results.isp && !results.any) 
-		return callback(results.normal || results.wilcard || false);
+	var _isp = false;
+	var _wilcard = false;
+	var _normal = false;
+	var _result = false;
 
-	var _isp = results.isp[this.client_req_isp] || results.isp['unicom'] || results.isp['telecom'] || false;
-	var _normal = results.normal || false;
-	var _wilcard = results.wilcard || results.any[this.client_req_isp] || results.any['unicom'] || results.any['telecom'] || false;
-	var _result = _isp || _normal || _wilcard || false;
+	if (results.isp)
+		_isp = results.isp[this.client_req_isp] || results.isp['unicom'] || results.isp['telecom'] || false;
 
-	return callback(_result);
+	if (results.any)
+		_wilcard = results.wilcard || results.any[this.client_req_isp] || results.any['unicom'] || results.any['telecom'] || false;
+
+	if (results.normal)
+		_normal = results.normal || false;
+
+	_result = _isp || _normal || _wilcard || false;
+
+	// IF NO RESULTS
+	if (_result) {
+		callback(_result);
+	} else {
+		this.server_req_msg = this.client_req_msg;
+		this.sendToServer(callback);
+	}
 };
 
 Dns.prototype.saveRecord = function() {
@@ -423,7 +459,7 @@ Dns.prototype.spoof = function() {
 			'name': this.client_req_name,
 			'type': this.client_req_type,
 			'ttl': 1, // 1 SEC
-			'address': isp_ip[this.checkIsp()],
+			'address': isp_ip[this.checkIsp().client_req_isp],
 			'class': 1
 		}]
 	};
@@ -434,39 +470,33 @@ Dns.prototype.spoof = function() {
 
 Dns.prototype.process = function(callback) {
 	var self = this;
-
-	this.checkIsp();
-	// CHECK DOMAIN VALIDITY
-	if (this.validity()) {
-		this.readRecord(function(result) {
+	var normalRequest = function() {
+		self.readRecord(function(result) {
 			if (result) {
 				self.writeResMsg(result);
 				self.sendToClient();
-				callback && callback(self);
-				return;
+				self.saveRecord();
+			} else {
+				badRequest();
 			}
 
-			self.server_req_msg = self.client_req_msg;
-			self.sendToServer(function(error) {
-				// WAIT TO FIND A GOOD WAY
-				if (!error) {
-					self.writeResMsg(self.server_res_packet);
-					self.sendToClient();
-					self.saveRecord();
-				}
-				
-				callback && callback(self);
-				return;
-			});
+			callback && callback(self);
 		});
-	} else {
-		this.server_res_packet = this.createPacket(this.client_req_id, 1);
-		this.writeResMsg(this.server_res_packet);
-		this.sendToClient();
+	};
+
+	var badRequest = function() {
+		self.server_res_packet = self.createPacket(self.client_req_id, 1);
+		self.writeResMsg(self.server_res_packet);
+		self.sendToClient();
 
 		callback && callback(self);
 		return;
-	}
+	};
+
+	this.checkIsp();
+	this.validity()
+		? normalRequest()
+		: badRequest();
 };
 
 module.exports = Dns;
