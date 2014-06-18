@@ -318,8 +318,6 @@ Dns.prototype.chooseFitRecord = function(results, callback) {
 
 	_result = _isp || _normal || _wilcard || false;
 
-	console.log('chooseFitRecord', _result);
-
 	// IF NO RESULTS
 	if (_result) {
 		callback(_result);
