@@ -295,7 +295,7 @@ Dns.prototype.checkIsp = function() {
 };
 
 Dns.prototype.chooseFitRecord = function(results, callback) {
-	if (results.length < 4) 
+	if (results.length < 4)
 		return;
 	
 	// SET STATISTICS AND PREFETCH
@@ -317,6 +317,8 @@ Dns.prototype.chooseFitRecord = function(results, callback) {
 		_normal = results.normal || false;
 
 	_result = _isp || _normal || _wilcard || false;
+
+	console.log('chooseFitRecord', _result);
 
 	// IF NO RESULTS
 	if (_result) {
@@ -466,7 +468,8 @@ Dns.prototype.process = function(callback) {
 		self.readRecord(function(result) {
 			if (result) {
 				self.writeResMsg(result, function() {
-					self.saveRecord();
+					if (self.server_res_packet)
+						self.saveRecord();
 				});
 				self.sendToClient();
 			} else {
