@@ -227,7 +227,7 @@ Dns.prototype.parseServerMsg = function(msg, callback) {
 		this.server_res_packet = ndp.parse(msg);
 		this.server_res_packet.answer.length > 0
 			? _ttl = this.server_res_packet.answer[0].ttl
-			: _ttl = 3600;
+			: _ttl = 60;
 		this.prefetch.save(this.client_req_name + ':' + this.client_req_type, _ttl);
 
 		return callback(this.server_res_packet);
