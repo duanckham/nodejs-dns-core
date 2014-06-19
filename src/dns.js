@@ -251,14 +251,14 @@ Dns.prototype.writeResMsg = function(answer_packet, callback) {
 	res.header.ra = res.header.rd; // CHECK RECURSION DESIRED
 
 	// ANSWER
-	res.answer = answer_packet.answer || [];
-	res.authority = answer_packet.authority || [];
-	res.additional = answer_packet.additional || [];
+	// FILTER RUBBISH DATA
+	['answer', 'authority', 'additional'].forEach(function(item) {
+		res[item] = answer_packet[item] || [];
 
-	// REMOVE RUBBISH DATA
-	for (var i = res.additional.length; i > 0; i--)
-		if (res.additional[i - 1].type === 0)
-			res.additional.splice(i - 1, 1);
+		for (var i = res[item].length; i > 0; i--)
+			if (res[item][i - 1].type === 0)
+				res[item].splice(i - 1, 1);
+	});
 
 	// MISS, JUMP
 	if (res.answer.length === 0 && CONFIG.DNS_MISS_ON) {
