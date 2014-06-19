@@ -153,9 +153,9 @@ Dns.prototype.sendToClient = function() {
 	}
 
 	try {
-		this.answered = true;
 		this.udp.send(this.client_res_msg, 0, this.client_res_msg.length, this.client_req_info.port, this.client_req_info.address);
 		this.report.dns_res_count++;
+		this.answered = true;
 	} catch (error) {
 		this.report.dns_err_count++;
 		this.report.log('error', 'Catch an error when send package to client.', {
@@ -170,14 +170,13 @@ Dns.prototype.sendToServer = function(callback) {
 	this.report.dns_ask_count++;
 	
 	var self = this;
-	var answered = false;
 	var counter = this.root_dns_servers.length;
 
 	this.root_dns_servers.forEach(function(server) {
 		self.rootService.ask(self.server_req_msg, server, self.client_req_name, function(error, msg) {
 			counter--;
 
-			if (answered)
+			if (self.answered)
 				return;
 
 			if (error) {
@@ -191,7 +190,6 @@ Dns.prototype.sendToServer = function(callback) {
 					if (!result && !counter)
 						return callback(false);
 
-					answered = true;
 					callback(result);
 				});
 			}
@@ -220,7 +218,6 @@ Dns.prototype.parseClientMsg = function(msg) {
 Dns.prototype.parseServerMsg = function(msg, callback) {
 	if (this.answered) return;
 	if (this.server_res_packet) return;
-	if (msg == 'timeout') return;
 
 	try {
 		this.root_dns_answers--;
@@ -258,6 +255,11 @@ Dns.prototype.writeResMsg = function(answer_packet, callback) {
 	res.authority = answer_packet.authority || [];
 	res.additional = answer_packet.additional || [];
 
+	// REMOVE RUBBISH DATA
+	for (var i = res.additional.length; i > 0; i--)
+		if (res.additional[i - 1].type === 0)
+			res.additional.splice(i - 1, 1);
+
 	// MISS, JUMP
 	if (res.answer.length === 0 && CONFIG.DNS_MISS_ON) {
 		this.report.dns_mis_count++;
@@ -283,7 +285,6 @@ Dns.prototype.writeResMsg = function(answer_packet, callback) {
 		this.report.log('error', 'Catch an error when write response message.', {
 			req: this.client_req_packet,
 			res: this.client_res_packet,
-			answer_packet: answer_packet,
 			client: this.client_req_info
 		});
 	}
