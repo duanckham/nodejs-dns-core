@@ -35,7 +35,7 @@ Record.prototype.get = function(key, callback) {
 			return callback(result);
 
 		// FILTER EXPIRED RECORD
-		result && result._expired > Date.now()
+		result && result.answer.length && result._expired > Date.now()
 			? callback(result)
 			: callback(false);
 	});

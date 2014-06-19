@@ -23,8 +23,6 @@ var test_a = function(server, clients_count, request_count) {
 	for (var i = 0; i < clients_count; i++) {
 		for (var j = 0; j < request_count; j++) {
 			clients[i].exec('dig @' + server + ' ' + domains[num], function(error) {
-				console.log('get a res');
-
 				if (error) _error++;
 				_total++;
 

@@ -3,8 +3,8 @@ var config = require('../config');
 
 var Sockets = function() {
 	this.sockets_timeout = CONFIG.DNS_SOCKET_TIMEOUT;
-	this.sockets_max_count = CONFIG.DNS_SOCKET_COUNT;
-	this.sockets_use_count = 0;
+	this.sockets_max = CONFIG.DNS_SOCKET_COUNT;
+	this.sockets_used = 0;
 	this.sockets_queue = [];
 	this.tasks_queue = [];
 
@@ -13,24 +13,24 @@ var Sockets = function() {
 
 Sockets.prototype.create = function(callback) {
 	var client = dgram.createSocket('udp4');
-	this.sockets_use_count++;
-	return callback(this.wraper(client));
+	this.sockets_used++;
+	return callback(this.wrapper(client));
 };
 
 Sockets.prototype.get = function(callback) {
-	if ((this.sockets_queue.length + this.sockets_use_count) < this.sockets_max_count) {
+	if ((this.sockets_queue.length + this.sockets_used) < this.sockets_max) {
 		this.create(callback);
 	} else {
 		if (this.sockets_queue.length > 0) {
-			this.sockets_use_count++;
-			callback(this.wraper(this.sockets_queue.shift()));
+			this.sockets_used++;
+			callback(this.wrapper(this.sockets_queue.shift()));
 		} else {
 			this.tasks_queue.push(callback);
 		}
 	}
 };
 
-Sockets.prototype.wraper = function(client) {
+Sockets.prototype.wrapper = function(client) {
 	var self = this;
 	var timeout = setTimeout(function() {
 		client.emit('timeout');
@@ -56,11 +56,11 @@ Sockets.prototype.back = function(client) {
 
 	// SAVE SOCKET TO QUEUE
 	this.sockets_queue.push(client);
-	this.sockets_use_count--;
+	this.sockets_used--;
 
 	if (this.tasks_queue.length > 0 && this.sockets_queue.length > 0) {
-		this.sockets_use_count++;
-		this.tasks_queue.shift()(this.wraper(this.sockets_queue.shift()));
+		this.sockets_used++;
+		this.tasks_queue.shift()(this.wrapper(this.sockets_queue.shift()));
 	}
 };
 
