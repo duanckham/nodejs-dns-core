@@ -206,11 +206,6 @@ Dns.prototype.parseClientMsg = function(msg) {
 		this.client_req_type = this.client_req_question.type;
 	} catch (error) {
 		this.report.dns_ign_count++;
-		this.report.dns_err_count++;
-		this.report.log('error', 'Catch an error when parse client package.', {
-			req: this.client_req_packet,
-			client: this.client_req_info
-		});
 		return null;
 	}
 };
@@ -255,9 +250,19 @@ Dns.prototype.writeResMsg = function(answer_packet, callback) {
 	['answer', 'authority', 'additional'].forEach(function(item) {
 		res[item] = answer_packet[item] || [];
 
-		for (var i = res[item].length; i > 0; i--)
-			if (res[item][i - 1].type === 0)
+		for (var i = res[item].length; i > 0; i--) {
+			var _tmp = res[item][i - 1];
+
+			if (_tmp.data && typeof(_tmp.data) !== 'string') {
 				res[item].splice(i - 1, 1);
+				continue;
+			}
+
+			if (_tmp.type === 0) {
+				res[item].splice(i - 1, 1);
+				continue;
+			}
+		}
 	});
 
 	// MISS, JUMP
@@ -437,6 +442,10 @@ Dns.prototype.authority = function(answer_packet) {
 
 Dns.prototype.validity = function(callback) {
 	var reg = /^(([01]?[\d]{1,2})|(2[0-4][\d])|(25[0-5]))(\.(([01]?[\d]{1,2})|(2[0-4][\d])|(25[0-5]))){3}$/;
+
+	if (!this.client_req_packet)
+		return false;
+
 	return !reg.test(this.client_req_name);
 };
 
