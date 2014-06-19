@@ -251,17 +251,20 @@ Dns.prototype.writeResMsg = function(answer_packet, callback) {
 		res[item] = answer_packet[item] || [];
 
 		for (var i = res[item].length; i > 0; i--) {
-			var _tmp = res[item][i - 1];
+			// var _tmp = res[item][i - 1];
 
-			if (_tmp.data && typeof(_tmp.data) !== 'string') {
-				res[item].splice(i - 1, 1);
-				continue;
-			}
+			// if (_tmp.data && typeof(_tmp.data) !== 'string') {
+			// 	res[item].splice(i - 1, 1);
+			// 	continue;
+			// }
 
-			if (_tmp.type === 0) {
+			// if (_tmp.type === 0) {
+			// 	res[item].splice(i - 1, 1);
+			// 	continue;
+			// }
+
+			if (res[item][i - 1].type === 0)
 				res[item].splice(i - 1, 1);
-				continue;
-			}
 		}
 	});
 
