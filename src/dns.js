@@ -190,6 +190,12 @@ Dns.prototype.sendToServer = function(callback) {
 					if (!result && !counter)
 						return callback(false);
 
+					if (!result && counter)
+						return;
+
+					if (!result.answer.length && counter > 0)
+						return;
+
 					callback(result);
 				});
 			}
@@ -211,8 +217,8 @@ Dns.prototype.parseClientMsg = function(msg) {
 };
 
 Dns.prototype.parseServerMsg = function(msg, callback) {
-	if (this.answered) return;
-	if (this.server_res_packet) return;
+	if (this.answered) return callback(false);
+	if (this.server_res_packet) return callback(false);
 
 	try {
 		this.root_dns_answers--;
