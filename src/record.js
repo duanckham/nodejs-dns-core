@@ -22,7 +22,7 @@ Record.prototype.set = function(key, value) {
 	// 60sec
 	value.answer.length > 0
 		? value._expired = Date.now() + (value.answer[0].ttl * 1000)
-		: value._expired = Date.now() + (60 * 1000);
+		: value._expired = Date.now() - 1000;
 
 	this.db.collection('main').set({_id: key}, value, nullcb);
 };
