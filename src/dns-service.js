@@ -38,10 +38,10 @@ var runTask = function(dns) {
 	var question_key = dns.client_req_name + ':' + dns.client_req_type;
 	var tasks_arr = tasks.get(question_key);
 
-	// FIRST ONE ALREADY COMPLETE
 	if (!tasks_arr)
 		return;
 
+	// FIRST ONE ALREADY COMPLETE
 	tasks_arr.shift();
 	tasks_arr.forEach(function(dns) {
 		dns.process();

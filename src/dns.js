@@ -171,36 +171,40 @@ Dns.prototype.sendToServer = function(callback) {
 	
 	var self = this;
 	var counter = this.root_dns_servers.length;
+	var times = 0;
 
-	this.root_dns_servers.forEach(function(server) {
+	var askRootServer = function() {
+		var server = self.root_dns_servers[times];
+
 		self.rootService.ask(self.server_req_msg, server, self.client_req_name, function(error, msg) {
-			counter--;
+			times++;
 
 			if (self.answered)
 				return;
 
-			if (error) {
-				self.report.dns_err_count++;
-				self.report.log('error', error.info, error.spot);
+			if (times == counter)
+				return callback(false);
 
-				if (!counter) 
-					callback(false);
-			} else {
-				self.parseServerMsg(msg, function(result) {
-					if (!result && !counter)
-						return callback(false);
+			if (error)
+				return askRootServer();
 
-					if (!result && counter)
-						return;
-
-					if (!result.answer.length && counter > 0)
-						return;
-
-					callback(result);
-				});
-			}
+			parseResult(msg);
 		});
-	});
+	};
+
+	var parseResult = function(msg) {
+		self.parseServerMsg(msg, function(result) {	
+			if (!result)
+				return askRootServer();
+
+			if (result && result.answer && result.authority && !result.answer.length && !result.authority.length)
+				return askRootServer();
+
+			callback(result);
+		});
+	};
+
+	askRootServer();
 };
 
 Dns.prototype.parseClientMsg = function(msg) {
@@ -297,39 +301,6 @@ Dns.prototype.checkIsp = function() {
 	return this;
 };
 
-Dns.prototype.chooseFitRecord = function(results, callback) {
-	if (results.length < 4)
-		return;
-	
-	// SET STATISTICS AND PREFETCH
-	this.statistics.hit(this.client_req_name, this.client_req_isp, this.client_req_type);
-	this.prefetch.update(this.client_req_name + ':' + this.client_req_type);
-
-	var _isp = false;
-	var _wilcard = false;
-	var _normal = false;
-	var _result = false;
-
-	if (results.isp)
-		_isp = results.isp[this.client_req_isp] || results.isp['unicom'] || results.isp['telecom'] || false;
-
-	if (results.any)
-		_wilcard = results.wilcard || results.any[this.client_req_isp] || results.any['unicom'] || results.any['telecom'] || false;
-
-	if (results.normal)
-		_normal = results.normal || false;
-
-	_result = _isp || _normal || _wilcard || false;
-
-	// IF NO RESULTS
-	if (_result) {
-		callback(_result);
-	} else {
-		this.server_req_msg = this.client_req_msg;
-		this.sendToServer(callback);
-	}
-};
-
 Dns.prototype.saveRecord = function() {
 	this.record.set(this.client_req_name + ':' + this.client_req_type, {
 		answer: this.client_res_packet.answer,
@@ -342,7 +313,7 @@ Dns.prototype.saveRecord = function() {
 
 Dns.prototype.readRecord = function(callback) {
 	var self = this;
-	var counter = 4;
+	var counter = 2;
 	var domain_key = this.client_req_name + ':' + this.client_req_type;
 	var domain_any;
 	var results = {
@@ -353,6 +324,11 @@ Dns.prototype.readRecord = function(callback) {
 	if (!this.client_req_name)
 		return callback(false);
 
+	// ANY WILCARD DOMAIN NAME
+	this.client_req_name.split('.').length > 2
+		? domain_any = '*.' + this.client_req_name.substr(this.client_req_name.indexOf('.') + 1) + ':' + this.client_req_type
+		: domain_any = '*.' + domain_key;
+
 	// NORMAL
 	this.record.get(domain_key, function(result) {
 		results.normal = result;
@@ -361,43 +337,63 @@ Dns.prototype.readRecord = function(callback) {
 	});
 
 	// WILCARD
-	this.record.get('*.' + domain_key, function(result) {
+	this.record.get(domain_any, function(result) {
 		results.wilcard = result;
 		results.length++;
 		self.chooseFitRecord(results, callback);
 	});
 
-	// ISP
-	// OUR SETTING -> chooseFitRecord -> PREFETCH UPDATE -> ROOT DNS(WILL ASK WE) -> OUR SETTING
-	this.record.get(domain_key + ':setting:isp', function(result) {
-		results.isp = result;
-		results.length++;
-		self.chooseFitRecord(results, callback);
-	});
+	this.report.dns_dbr_count += 2;
+};
 
-	// ANY WILCARD
-	this.client_req_name.split('.').length > 2
-		? domain_any = '*.' + this.client_req_name.substr(this.client_req_name.indexOf('.') + 1) + ':' + this.client_req_type + ':setting:isp'
-		: domain_any = '*.' + domain_key + ':setting:isp';
+Dns.prototype.chooseFitRecord = function(results, callback) {
+	if (results.length < 2)
+		return;
 
-	this.record.get(domain_any, function(result) {
-		// REPLACE
-		for (var isp in result) {
-			for (var part in result[isp]) {
-				for (var item in result[isp][part]) {
-					if (result[isp][part][item]['name'] == domain_any.split(':')[0]) {
-						result[isp][part][item]['name'] = self.client_req_name;
-					}
-				}
-			}
+	// SET STATISTICS AND PREFETCH
+	this.statistics.hit(this.client_req_name, this.client_req_isp, this.client_req_type);
+	this.prefetch.update(this.client_req_name + ':' + this.client_req_type);
+
+	var self = this;
+	var insertAnswer = function(result) {
+		var name = results.wilcard._id.split(':')[0];
+		var str = JSON.stringify(result);
+		var tmp;
+
+		while (1) {
+			str = str.replace(name, self.client_req_name);
+			if (str === tmp) break;
+			tmp = str;
 		}
 
-		results.any = result;
-		results.length++;
-		self.chooseFitRecord(results, callback);
-	});
+		return JSON.parse(str);
+	};
 
-	this.report.dns_dbr_count += 4;
+	if (results.normal) {
+		if (results.normal.telecom)
+			return callback(results.normal.telecom);
+
+		if (results.normal.unicom)
+			return callback(results.normal.unicom);
+
+		if (results.normal.general)
+			return callback(results.normal.general);
+	}
+
+	if (results.wilcard) {
+		if (results.wilcard.telecom)
+			return callback(insertAnswer(results.wilcard.telecom));
+
+		if (results.wilcard.unicom)
+			return callback(insertAnswer(results.wilcard.unicom));
+
+		if (results.wilcard.general)
+			return callback(insertAnswer(results.wilcard.general));
+	}
+
+	this.server_req_msg = this.client_req_msg;
+	this.sendToServer(callback);
+	return;
 };
 
 Dns.prototype.createPacket = function(id, is_answer) {

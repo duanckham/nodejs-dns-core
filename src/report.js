@@ -5,6 +5,7 @@ var nullcb = function() {};
 var Report = function() {
 	var self = this;
 
+	this.switch_view = false;
 	this.funcs = [];
 	this.db = new DB('REPORT', function() {
 		self.funcs.forEach(function(func) {
@@ -34,8 +35,9 @@ Report.prototype.ready = function(func) {
 Report.prototype.view = function(secend) {
 	var self = this;
 
+	this.switch_view = true;
+
 	setInterval(function() {
-		self.monitor();
 		console.log(
 			'REQ', self.fixlen(self.dns_req_count), 
 			', RES', self.fixlen(self.dns_res_count),
@@ -50,6 +52,9 @@ Report.prototype.view = function(secend) {
 };
 
 Report.prototype.log = function(type, content, spot) {
+	if (!this.switch_view)
+		return;
+
 	var uuid = this.db.uid();
 	var data = {
 		_id: uuid,
@@ -65,12 +70,6 @@ Report.prototype.log = function(type, content, spot) {
 
 Report.prototype.fixlen = function(str) {
 	return '       '.substr(('' + str).length) + str;
-};
-
-Report.prototype.monitor = function() {
-	// CAN NOT RESPONSE
-	if (this.dns_req_count > (5 * this.dns_res_count))
-		process.emit('WARNING_CANNOT_RESPONSE');
 };
 
 module.exports = Report;
