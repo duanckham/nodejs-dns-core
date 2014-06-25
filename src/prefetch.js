@@ -46,7 +46,7 @@ Prefetch.prototype.update = function(domain) {
 		results.forEach(function(result) {
 			counter++;
 			if (parseInt(self.expireTime(10)) - parseInt(result.expire) > 3600)
-				self.db_index.collection('main').remove(result._id, nullcb);
+				self.db_index.collection('main').remove({_id: result._id}, nullcb);
 		});
 
 		self.save(domain, 60);
