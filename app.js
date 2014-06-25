@@ -18,4 +18,4 @@ process.on('uncaughtException', function(error) {
 });
 
 dnsCoreService.run(CONFIG.DNS_PORT);
-dnsPrefetchService.run(CONFIG.DNS_PREFETCH_HEARTBEAT);
+// dnsPrefetchService.run(CONFIG.DNS_PREFETCH_HEARTBEAT);
