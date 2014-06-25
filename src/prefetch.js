@@ -45,11 +45,11 @@ Prefetch.prototype.update = function(domain) {
 	this.db_index.collection('main').get({_id: expId}, function(results) {
 		results.forEach(function(result) {
 			counter++;
-			if (parseInt(self.expireTime(10)) - parseInt(result.expire) > 3600) {
+			if (parseInt(self.expireTime(10)) - parseInt(result.expire) > 3600)
 				self.db_index.collection('main').remove(result._id, nullcb);
-				self.save(domain, 60);
-			}
 		});
+
+		self.save(domain, 60);
 	});
 };
 
