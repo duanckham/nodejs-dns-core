@@ -36,6 +36,9 @@ DB.prototype.collection = function(collection_name) {
 	return {
 		coll: coll,
 		set: function(data, newData, callback) {
+
+			console.log(', set');
+
 			if (arguments.length === 2) {
 				callback = newData;
 				coll.insert(data, callback);
@@ -44,11 +47,17 @@ DB.prototype.collection = function(collection_name) {
 			}
 		},
 		get: function(data, callback) {
+
+			console.log(', get');
+
 			coll.find(data).toArray(function(err, replies) {
 				callback(replies);
 			});
 		},
 		one: function(data, callback) {
+
+			console.log(', one');
+
 			coll.find(data).toArray(function(err, replies) {
 				!err && replies
 					? callback(replies.length > 0 ? replies[0] : false)
@@ -56,14 +65,23 @@ DB.prototype.collection = function(collection_name) {
 			});
 		},
 		all: function(callback) {
+
+			console.log(', all');
+
 			coll.find().toArray(function(err, replies) {
 				callback(replies);
 			});
 		},
 		inc: function(data, inc, callback) {
+
+			console.log(', inc');
+
 			coll.update(data, {$inc: inc}, {upsert: true}, callback);
 		},
 		remove: function(data, callback) {
+
+			console.log(', remove');
+
 			coll.remove(data, callback);
 		}
 	}
